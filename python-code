@@ -1,0 +1,48 @@
+import json
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import DBSCAN
+import re
+import numpy as np
+
+print(__doc__)
+
+plt.style.use('ggplot')
+
+
+os.chdir("/media/batman/Stuff/Projects/DBSCAN")           #changing working directory
+
+data = []                                                 #declare an empty array
+with open('sample2.json') as f:                           #read logs from JSON file line by line
+    for line in f:
+        data.append(json.loads(line))                     #append at the end of data array
+
+data = json.dumps(data)                                   #use dumps to convert data array into a JSON object
+df = pd.read_json(data)                                   #use datas to form a pandas dataframe
+
+unique_values = df.apply(lambda x: x.nunique())    #calculate number of unique addreses in given batch
+right_num_of_clusters = ds = unique_values[0]     #number of unique addresses correspond to expected number of clusters
+
+
+Count_Row = df.shape[0]
+for i in range(0,Count_Row) :
+    df.address[i] = re.sub('[:]','', df.address[i])
+    df.address[i] = int(df.address[i], 16)
+#form a 2D matrix taking address as one of the dimensions and one of the others as the other
+rssi_matrix = pd.concat([df.address, df.rssi], axis=1, join_axes=[df.address.index])
+
+#advertiseFlags_matrix = pd.concat([df.address, df.advertiseFlags], axis=1, join_axes=[df.address.index])
+#manufacturerData_matrix = pd.concat([df.address, df.manufacturerData], axis=1, join_axes=[df.address.index])
+#manufacturerID_matrix = pd.concat([df.address, df.manufacturerID], axis=1, join_axes=[df.address.index])
+#txPowerLevel_matrix = pd.concat([df.address, df.txPowerLevel], axis=1, join_axes=[df.address.index])
+
+#create a DBSCAN model for rssi_matrix
+model = DBSCAN(eps = 0.25, min_samples=12).fit(rssi_matrix)
+labels = model.labels_
+num_of_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+print(num_of_clusters)
+if(num_of_clusters == right_num_of_clusters):
+        print("Safe")
+else:
+        print("Forged Data found. Network at risl")        
